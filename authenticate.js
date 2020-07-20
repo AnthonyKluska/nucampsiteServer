@@ -10,6 +10,8 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 
 const config = require('./config.js');
+const { replaceOne } = require('./models/user');
+const { NotExtended } = require('http-errors');
 
 exports.getToken = function(user) {
     return jwt.sign(user, config.secretKey, {expiresIn: 3600});
@@ -18,6 +20,7 @@ exports.getToken = function(user) {
 const opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = config.secretKey;
+
 
 exports.jwtPassport = passport.use(
     new JwtStrategy(
@@ -32,9 +35,19 @@ exports.jwtPassport = passport.use(
                 } else {
                     return done(null, false);
                 }
-            });
+            })
         }
     )
 );
 
 exports.verifyUser = passport.authenticate('jwt', {session: false});
+
+exports.verifyAdmin = (req, res, next) =>{
+    if(rec.user.admin === true){
+        return next();
+
+    }else{
+        err = new Error("Auth Failed");
+        return next(err); 
+    }
+}
